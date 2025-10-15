@@ -6,10 +6,15 @@
   <title>Toastmasters Role Tracker</title>
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#002366" />
+  <script> tailwind.config = { darkMode: 'class' }; </script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
+    html, body {
+      transition: background-color 0.4s ease, color 0.4s ease;
+      }
+
     .transition-theme { transition: background-color 0.3s, color 0.3s; }
     .timeline::before {
       content: "";
@@ -21,10 +26,30 @@
       background-color: #d1d5db;
     }
     .dark .timeline::before { background-color: #374151; }
+
+    /* Active tab highlight */
+    .active-tab { background-color: rgba(37,99,235,0.1); }
+    .dark .active-tab { background-color: rgba(59,130,246,0.25); }
+
+    /* --- High contrast dark mode fix --- */
+    .dark body,
+    .dark main,
+    .dark div,
+    .dark h1, .dark h2, .dark h3,
+    .dark p, .dark span, .dark label,
+    .dark strong, .dark em, .dark small {
+      color: #f9fafb !important;
+    }
+
+    .dark h2, .dark h3 { color: #60a5fa !important; } /* accent for headings */
+    .dark .bg-white { background-color: #1f2937 !important; }
+    .dark .shadow { box-shadow: 0 2px 8px rgba(255,255,255,0.05); }
+    .dark canvas { background-color: #111827 !important; }
   </style>
 </head>
 
 <body class="bg-gray-100 text-gray-900 transition-theme" id="body">
+  <!-- Header -->
   <header class="bg-blue-800 text-white p-4 text-xl font-bold flex justify-between items-center">
     <span>Toastmasters Role Tracker 🎙️</span>
     <label class="flex items-center cursor-pointer">
@@ -37,12 +62,13 @@
   </header>
 
   <!-- Navigation Tabs -->
-  <div class="flex justify-center bg-white shadow dark:bg-gray-800">
-    <button id="tab-tracker" class="flex-1 py-2 border-b-4 border-blue-800 font-semibold">Tracker</button>
-    <button id="tab-summary" class="flex-1 py-2 border-b-4 border-transparent font-semibold text-gray-500">Summary</button>
-    <button id="tab-timeline" class="flex-1 py-2 border-b-4 border-transparent font-semibold text-gray-500">Timeline</button>
-    <button id="tab-insights" class="flex-1 py-2 border-b-4 border-transparent font-semibold text-gray-500">Insights</button>
-    <button id="tab-timer" class="flex-1 py-2 border-b-4 border-transparent font-semibold text-gray-500">Timer</button>
+  <div class="flex justify-center flex-wrap bg-white dark:bg-gray-900 shadow border-b border-gray-200 dark:border-gray-700">
+    <button id="tab-tracker" class="py-2 px-3 border-b-4 border-blue-800 font-semibold text-gray-900 dark:text-white active-tab">Tracker</button>
+    <button id="tab-summary" class="py-2 px-3 border-b-4 border-transparent font-semibold text-gray-700 dark:text-gray-300 hover:text-blue-400">Summary</button>
+    <button id="tab-timeline" class="py-2 px-3 border-b-4 border-transparent font-semibold text-gray-700 dark:text-gray-300 hover:text-blue-400">Timeline</button>
+    <button id="tab-insights" class="py-2 px-3 border-b-4 border-transparent font-semibold text-gray-700 dark:text-gray-300 hover:text-blue-400">Insights</button>
+    <button id="tab-timer" class="py-2 px-3 border-b-4 border-transparent font-semibold text-gray-700 dark:text-gray-300 hover:text-blue-400">Timer</button>
+    <button id="tab-leader" class="py-2 px-3 border-b-4 border-transparent font-semibold text-gray-700 dark:text-gray-300 hover:text-blue-400">Leader In Me</button>
   </div>
 
   <!-- Tracker Tab -->
@@ -70,7 +96,7 @@
   <!-- Summary Tab -->
   <main id="summaryTab" class="p-4 max-w-md mx-auto hidden">
     <h2 class="text-lg font-semibold mb-4 text-center">Summary 📊</h2>
-    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow mb-6">
+    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow mb-6 text-gray-900 dark:text-gray-100">
       <canvas id="roleChart" height="200"></canvas>
     </div>
   </main>
@@ -84,14 +110,16 @@
   <!-- Insights Tab -->
   <main id="insightsTab" class="p-4 max-w-md mx-auto hidden">
     <h2 class="text-lg font-semibold mb-4 text-center">Insights Dashboard 🧠</h2>
-    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow space-y-3">
+    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow space-y-3 text-gray-900 dark:text-gray-100">
       <p><strong>Total Roles:</strong> <span id="totalRoles">0</span></p>
       <p><strong>Top 3 Roles:</strong> <span id="topRoles">-</span></p>
       <p><strong>Average Rating:</strong> <span id="avgRating">-</span></p>
       <p><strong>Longest Gap:</strong> <span id="longestGap">-</span></p>
       <p><strong>Current Streak:</strong> <span id="streakCount">-</span></p>
       <div class="mt-3">
-        <label>🎯 Yearly Goal: <input type="number" id="goalInput" min="1" class="p-1 border rounded w-16 dark:bg-gray-700 dark:text-white"></label>
+        <label>🎯 Yearly Goal:
+          <input type="number" id="goalInput" min="1" class="p-1 border rounded w-16 dark:bg-gray-700 dark:text-white">
+        </label>
         <p id="goalProgress" class="mt-1 text-sm"></p>
       </div>
       <canvas id="insightPie" height="180"></canvas>
@@ -101,13 +129,25 @@
   <!-- Timer Tab -->
   <main id="timerTab" class="p-4 max-w-md mx-auto hidden">
     <h2 class="text-lg font-semibold mb-4 text-center">Speech Timer ⏱️</h2>
-    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow text-center space-y-3">
+    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow text-center space-y-3 text-gray-900 dark:text-gray-100">
       <label>Duration (min):
         <input type="number" id="timerInput" value="5" min="2" max="7" class="w-20 text-center border rounded dark:bg-gray-700 dark:text-white" />
       </label>
       <div id="timerDisplay" class="text-3xl font-bold">00:00</div>
       <button id="startTimer" class="bg-green-600 text-white px-4 py-2 rounded">Start</button>
       <button id="resetTimer" class="bg-red-600 text-white px-4 py-2 rounded">Reset</button>
+    </div>
+  </main>
+
+  <!-- Leader In Me Tab -->
+  <main id="leaderTab" class="p-4 max-w-md mx-auto hidden">
+    <h2 class="text-lg font-semibold mb-3 text-center">🏅 Leader In Me Tracker</h2>
+    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow text-gray-900 dark:text-gray-100">
+      <p id="leaderProgress" class="font-semibold mb-3">Progress: 0 / 10 (0%)</p>
+      <div id="leaderContainer" class="space-y-3"></div>
+      <div id="leaderCongrats" class="hidden mt-4 text-center bg-green-100 text-green-800 p-3 rounded-lg font-bold">
+        🎉 Congratulations! You’ve completed the Leader In Me journey!
+      </div>
     </div>
   </main>
 

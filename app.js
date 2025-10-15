@@ -1,3 +1,9 @@
+/* ============================================================
+   Toastmasters Role Tracker v10
+   Includes: Tracker • Summary • Timeline • Insights • Timer • Leader In Me
+   Works fully offline (PWA)
+   ============================================================ */
+
 // ---------------- PWA Registration ----------------
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker
@@ -6,7 +12,7 @@ if ("serviceWorker" in navigator) {
     .catch((err) => console.error("SW registration failed:", err));
 }
 
-// ---------------- Dark Mode ----------------
+// ---------------- Theme Toggle ----------------
 const body = document.getElementById("body");
 const themeToggle = document.getElementById("themeToggle");
 const toggleTrack = document.getElementById("toggleTrack");
@@ -34,39 +40,7 @@ window.addEventListener("load", () => {
   setTheme(dark);
 });
 
-// ---------------- Elements ----------------
-const form = document.getElementById("roleForm");
-const rolesList = document.getElementById("roles");
-const timelineContainer = document.getElementById("timelineContainer");
-const tabTracker = document.getElementById("tab-tracker");
-const tabSummary = document.getElementById("tab-summary");
-const tabTimeline = document.getElementById("tab-timeline");
-const tabInsights = document.getElementById("tab-insights");
-const tabTimer = document.getElementById("tab-timer");
-const trackerTab = document.getElementById("trackerTab");
-const summaryTab = document.getElementById("summaryTab");
-const timelineTab = document.getElementById("timelineTab");
-const insightsTab = document.getElementById("insightsTab");
-const timerTab = document.getElementById("timerTab");
-
-// Insights elements
-const totalRolesEl = document.getElementById("totalRoles");
-const topRolesEl = document.getElementById("topRoles");
-const avgRatingEl = document.getElementById("avgRating");
-const longestGapEl = document.getElementById("longestGap");
-const streakCountEl = document.getElementById("streakCount");
-const goalInput = document.getElementById("goalInput");
-const goalProgress = document.getElementById("goalProgress");
-
-// Timer elements
-const timerInput = document.getElementById("timerInput");
-const timerDisplay = document.getElementById("timerDisplay");
-const startTimerBtn = document.getElementById("startTimer");
-const resetTimerBtn = document.getElementById("resetTimer");
-let timerInterval = null;
-let startTime = null;
-
-// ---------------- Data Functions ----------------
+// ---------------- Data Access ----------------
 function getRoles() {
   return JSON.parse(localStorage.getItem("roles") || "[]");
 }
@@ -74,7 +48,10 @@ function saveRoles(data) {
   localStorage.setItem("roles", JSON.stringify(data));
 }
 
-// ---------------- Tracker Functions ----------------
+// ---------------- Tracker ----------------
+const form = document.getElementById("roleForm");
+const rolesList = document.getElementById("roles");
+
 function loadRoles() {
   const roles = getRoles();
   if (roles.length === 0) {
@@ -115,6 +92,7 @@ form.addEventListener("submit", (e) => {
   updateSummary();
   updateTimeline();
   updateInsights();
+  updateLeaderTracker();
 });
 
 function deleteRole(i) {
@@ -125,9 +103,10 @@ function deleteRole(i) {
   updateSummary();
   updateTimeline();
   updateInsights();
+  updateLeaderTracker();
 }
 
-// ---------------- Summary (Chart.js) ----------------
+// ---------------- Summary ----------------
 let roleChart = null;
 function updateSummary() {
   const roles = getRoles();
@@ -158,6 +137,7 @@ function updateSummary() {
 // ---------------- Timeline ----------------
 function updateTimeline() {
   const roles = getRoles();
+  const timelineContainer = document.getElementById("timelineContainer");
   timelineContainer.innerHTML = "";
   if (roles.length === 0) {
     timelineContainer.innerHTML =
@@ -201,6 +181,14 @@ function updateTimeline() {
 let insightPie = null;
 function updateInsights() {
   const roles = getRoles();
+  const totalRolesEl = document.getElementById("totalRoles");
+  const topRolesEl = document.getElementById("topRoles");
+  const avgRatingEl = document.getElementById("avgRating");
+  const longestGapEl = document.getElementById("longestGap");
+  const streakCountEl = document.getElementById("streakCount");
+  const goalInput = document.getElementById("goalInput");
+  const goalProgress = document.getElementById("goalProgress");
+
   const total = roles.length;
   totalRolesEl.textContent = total;
 
@@ -210,7 +198,6 @@ function updateInsights() {
     return;
   }
 
-  // Top roles
   const freq = {};
   let ratings = [];
   roles.forEach((r) => {
@@ -223,13 +210,11 @@ function updateInsights() {
     .slice(0, 3);
   topRolesEl.textContent = sortedRoles.join(", ") || "-";
 
-  // Average rating
   avgRatingEl.textContent =
     ratings.length > 0
       ? `${(ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1)} ⭐`
       : "-";
 
-  // Longest gap
   const sorted = [...roles].sort(
     (a, b) => new Date(a.date) - new Date(b.date)
   );
@@ -242,7 +227,6 @@ function updateInsights() {
   }
   longestGapEl.textContent = `${Math.round(longestGap)} days`;
 
-  // Streak counter
   const months = new Set(
     roles.map(
       (r) =>
@@ -251,14 +235,12 @@ function updateInsights() {
   );
   streakCountEl.textContent = months.size + " months active";
 
-  // Goal tracker
   const goal = parseInt(goalInput.value || localStorage.getItem("goal") || 10);
   localStorage.setItem("goal", goal);
   goalInput.value = goal;
   const percent = Math.min((total / goal) * 100, 100).toFixed(0);
   goalProgress.textContent = `${total} / ${goal} roles (${percent}%)`;
 
-  // Pie chart
   const ctx = document.getElementById("insightPie").getContext("2d");
   if (insightPie) insightPie.destroy();
   insightPie = new Chart(ctx, {
@@ -280,12 +262,19 @@ function updateInsights() {
     },
   });
 }
+document.getElementById("goalInput").addEventListener("input", () => updateInsights());
 
-goalInput.addEventListener("input", () => updateInsights());
-
-// ---------------- Speech Timer ----------------
+// ---------------- Timer ----------------
 let timerRunning = false;
 let timerSeconds = 0;
+let timerInterval = null;
+let startTime = null;
+
+const timerInput = document.getElementById("timerInput");
+const timerDisplay = document.getElementById("timerDisplay");
+const startTimerBtn = document.getElementById("startTimer");
+const resetTimerBtn = document.getElementById("resetTimer");
+
 function updateTimerDisplay(seconds, limit) {
   const min = Math.floor(seconds / 60)
     .toString()
@@ -324,39 +313,104 @@ resetTimerBtn.addEventListener("click", () => {
 });
 
 // ---------------- Tabs ----------------
-function showTab(activeTab) {
-  [trackerTab, summaryTab, timelineTab, insightsTab, timerTab].forEach((t) =>
-    t.classList.add("hidden")
+const trackerTab = document.getElementById("trackerTab");
+const summaryTab = document.getElementById("summaryTab");
+const timelineTab = document.getElementById("timelineTab");
+const insightsTab = document.getElementById("insightsTab");
+const timerTab = document.getElementById("timerTab");
+const leaderTab = document.getElementById("leaderTab");
+const tabTracker = document.getElementById("tab-tracker");
+const tabSummary = document.getElementById("tab-summary");
+const tabTimeline = document.getElementById("tab-timeline");
+const tabInsights = document.getElementById("tab-insights");
+const tabTimer = document.getElementById("tab-timer");
+const tabLeader = document.getElementById("tab-leader");
+
+function showTab(activeTab, activeButton) {
+  [trackerTab, summaryTab, timelineTab, insightsTab, timerTab, leaderTab].forEach(
+    (t) => t.classList.add("hidden")
   );
   activeTab.classList.remove("hidden");
-
-  [tabTracker, tabSummary, tabTimeline, tabInsights, tabTimer].forEach((b) =>
-    b.classList.remove("border-blue-800")
+  [tabTracker, tabSummary, tabTimeline, tabInsights, tabTimer, tabLeader].forEach(
+    (b) => b.classList.remove("border-blue-800")
   );
+  activeButton.classList.add("border-blue-800");
 }
 
-tabTracker.onclick = () => {
-  showTab(trackerTab);
-  tabTracker.classList.add("border-blue-800");
-};
+tabTracker.onclick = () => showTab(trackerTab, tabTracker);
 tabSummary.onclick = () => {
-  showTab(summaryTab);
-  tabSummary.classList.add("border-blue-800");
+  showTab(summaryTab, tabSummary);
   updateSummary();
 };
 tabTimeline.onclick = () => {
-  showTab(timelineTab);
-  tabTimeline.classList.add("border-blue-800");
+  showTab(timelineTab, tabTimeline);
   updateTimeline();
 };
 tabInsights.onclick = () => {
-  showTab(insightsTab);
-  tabInsights.classList.add("border-blue-800");
+  showTab(insightsTab, tabInsights);
   updateInsights();
 };
-tabTimer.onclick = () => {
-  showTab(timerTab);
-  tabTimer.classList.add("border-blue-800");
+tabTimer.onclick = () => showTab(timerTab, tabTimer);
+
+// ---------------- Leader In Me ----------------
+const leaderSkills = [
+  { title: "Listening", need: 2, roles: ["Ah Counter", "Speech Evaluator", "Grammarian", "TT Speaker"] },
+  { title: "Critical Thinking", need: 2, roles: ["Speech Evaluator", "Grammarian", "General Evaluator"] },
+  { title: "Giving Feedback", need: 2, roles: ["Speech Evaluator", "Grammarian", "General Evaluator"] },
+  { title: "Time Management", need: 2, roles: ["Timer", "Topicsmaster", "Speaker"] },
+  { title: "Planning and Implementation", need: 2, roles: ["Speaker", "General Evaluator", "Toastmaster of the Day", "Topicsmaster"] },
+  { title: "Organizing and Delegating", need: 1, roles: ["Contest Organizer", "Event Helper", "Open House", "Newsletter"] },
+  { title: "Facilitation", need: 1, roles: ["Toastmaster of the Day", "General Evaluator", "Table Topics Master", "Contest Chair"] },
+  { title: "Motivation", need: 1, roles: ["Speech Evaluator", "General Evaluator"] },
+  { title: "Mentoring", need: 1, roles: ["Mentor", "HPL Guidance Committee Member"] },
+  { title: "Team Building", need: 1, roles: ["Toastmaster of the Day", "Contest Chair", "Chief Judge", "Event Convenor"] },
+];
+
+const leaderContainer = document.getElementById("leaderContainer");
+const leaderProgress = document.getElementById("leaderProgress");
+const leaderCongrats = document.getElementById("leaderCongrats");
+
+function updateLeaderTracker() {
+  const roles = getRoles();
+  leaderContainer.innerHTML = "";
+  let completedSkills = 0;
+
+  leaderSkills.forEach((skill, idx) => {
+    const matched = skill.roles.filter(r =>
+      roles.some(role => role.role.toLowerCase().includes(r.toLowerCase()))
+    );
+    const count = matched.length;
+    const done = count >= skill.need;
+    if (done) completedSkills++;
+
+    const color = done ? "border-green-500" : count > 0 ? "border-yellow-400" : "border-red-400";
+    const wrapper = document.createElement("div");
+    wrapper.className = `border-l-4 ${color} p-2 bg-gray-50 dark:bg-gray-700 rounded`;
+    wrapper.innerHTML = `
+      <div class="flex justify-between items-center cursor-pointer" onclick="toggleLeaderDetail(${idx})">
+        <span><strong>${skill.title}</strong> — ${count}/${skill.need}</span>
+        <span>${done ? "✅" : count > 0 ? "🟡" : "🔴"}</span>
+      </div>
+      <div id="leader-detail-${idx}" class="hidden mt-2 ml-3 text-sm space-y-1">
+        ${skill.roles
+          .map(r => `<div>${matched.includes(r) ? "✔" : "❌"} ${r}</div>`)
+          .join("")}
+      </div>`;
+    leaderContainer.appendChild(wrapper);
+  });
+
+  const percent = Math.round((completedSkills / leaderSkills.length) * 100);
+  leaderProgress.textContent = `Progress: ${completedSkills} / ${leaderSkills.length} (${percent}%)`;
+  leaderCongrats.classList.toggle("hidden", completedSkills !== leaderSkills.length);
+}
+
+function toggleLeaderDetail(i) {
+  document.getElementById(`leader-detail-${i}`).classList.toggle("hidden");
+}
+
+tabLeader.onclick = () => {
+  showTab(leaderTab, tabLeader);
+  updateLeaderTracker();
 };
 
 // ---------------- Init ----------------
@@ -365,5 +419,5 @@ window.onload = () => {
   updateSummary();
   updateTimeline();
   updateInsights();
+  updateLeaderTracker();
 };
-showTab(trackerTab);
