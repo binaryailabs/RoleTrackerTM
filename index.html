@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Toastmasters Role Tracker</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#002366" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    .transition-theme { transition: background-color 0.3s, color 0.3s; }
+    .timeline::before {
+      content: "";
+      position: absolute;
+      left: 1.5rem;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background-color: #d1d5db;
+    }
+    .dark .timeline::before { background-color: #374151; }
+  </style>
+</head>
+
+<body class="bg-gray-100 text-gray-900 transition-theme" id="body">
+  <header class="bg-blue-800 text-white p-4 text-xl font-bold flex justify-between items-center">
+    <span>Toastmasters Role Tracker 🎙️</span>
+    <label class="flex items-center cursor-pointer">
+      <span class="mr-2 text-sm">🌙</span>
+      <input type="checkbox" id="themeToggle" class="hidden" />
+      <div class="w-10 h-5 bg-gray-300 rounded-full p-1 flex items-center transition" id="toggleTrack">
+        <div class="w-4 h-4 bg-white rounded-full shadow transform transition" id="toggleThumb"></div>
+      </div>
+    </label>
+  </header>
+
+  <!-- Navigation Tabs -->
+  <div class="flex justify-center bg-white shadow dark:bg-gray-800">
+    <button id="tab-tracker" class="flex-1 py-2 border-b-4 border-blue-800 font-semibold">Tracker</button>
+    <button id="tab-summary" class="flex-1 py-2 border-b-4 border-transparent font-semibold text-gray-500">Summary</button>
+    <button id="tab-timeline" class="flex-1 py-2 border-b-4 border-transparent font-semibold text-gray-500">Timeline</button>
+    <button id="tab-insights" class="flex-1 py-2 border-b-4 border-transparent font-semibold text-gray-500">Insights</button>
+    <button id="tab-timer" class="flex-1 py-2 border-b-4 border-transparent font-semibold text-gray-500">Timer</button>
+  </div>
+
+  <!-- Tracker Tab -->
+  <main id="trackerTab" class="p-4 max-w-md mx-auto">
+    <form id="roleForm" class="space-y-3 bg-white dark:bg-gray-800 p-4 rounded-2xl shadow">
+      <input type="date" id="date" class="w-full p-2 border rounded dark:bg-gray-700 dark:text-white" required />
+      <input type="text" id="role" placeholder="Role (Speaker, Evaluator...)" class="w-full p-2 border rounded dark:bg-gray-700 dark:text-white" required />
+      <input type="text" id="club" placeholder="Club Name" class="w-full p-2 border rounded dark:bg-gray-700 dark:text-white" required />
+      <textarea id="notes" placeholder="Feedback / Learnings" class="w-full p-2 border rounded dark:bg-gray-700 dark:text-white"></textarea>
+      <label class="block">Rating:
+        <select id="rating" class="w-full p-2 border rounded dark:bg-gray-700 dark:text-white">
+          <option value="">Select rating</option>
+          <option>⭐</option><option>⭐⭐</option><option>⭐⭐⭐</option><option>⭐⭐⭐⭐</option><option>⭐⭐⭐⭐⭐</option>
+        </select>
+      </label>
+      <button type="submit" id="saveBtn" class="bg-blue-700 text-white w-full py-2 rounded">Add Role</button>
+    </form>
+
+    <section id="rolesList" class="mt-6">
+      <h2 class="text-lg font-semibold mb-2">My Roles</h2>
+      <ul id="roles" class="space-y-2"></ul>
+    </section>
+  </main>
+
+  <!-- Summary Tab -->
+  <main id="summaryTab" class="p-4 max-w-md mx-auto hidden">
+    <h2 class="text-lg font-semibold mb-4 text-center">Summary 📊</h2>
+    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow mb-6">
+      <canvas id="roleChart" height="200"></canvas>
+    </div>
+  </main>
+
+  <!-- Timeline Tab -->
+  <main id="timelineTab" class="p-4 max-w-md mx-auto hidden relative">
+    <h2 class="text-lg font-semibold mb-4 text-center">Timeline of Roles 🗓️</h2>
+    <div id="timelineContainer" class="timeline relative pl-8 space-y-6"></div>
+  </main>
+
+  <!-- Insights Tab -->
+  <main id="insightsTab" class="p-4 max-w-md mx-auto hidden">
+    <h2 class="text-lg font-semibold mb-4 text-center">Insights Dashboard 🧠</h2>
+    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow space-y-3">
+      <p><strong>Total Roles:</strong> <span id="totalRoles">0</span></p>
+      <p><strong>Top 3 Roles:</strong> <span id="topRoles">-</span></p>
+      <p><strong>Average Rating:</strong> <span id="avgRating">-</span></p>
+      <p><strong>Longest Gap:</strong> <span id="longestGap">-</span></p>
+      <p><strong>Current Streak:</strong> <span id="streakCount">-</span></p>
+      <div class="mt-3">
+        <label>🎯 Yearly Goal: <input type="number" id="goalInput" min="1" class="p-1 border rounded w-16 dark:bg-gray-700 dark:text-white"></label>
+        <p id="goalProgress" class="mt-1 text-sm"></p>
+      </div>
+      <canvas id="insightPie" height="180"></canvas>
+    </div>
+  </main>
+
+  <!-- Timer Tab -->
+  <main id="timerTab" class="p-4 max-w-md mx-auto hidden">
+    <h2 class="text-lg font-semibold mb-4 text-center">Speech Timer ⏱️</h2>
+    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow text-center space-y-3">
+      <label>Duration (min):
+        <input type="number" id="timerInput" value="5" min="2" max="7" class="w-20 text-center border rounded dark:bg-gray-700 dark:text-white" />
+      </label>
+      <div id="timerDisplay" class="text-3xl font-bold">00:00</div>
+      <button id="startTimer" class="bg-green-600 text-white px-4 py-2 rounded">Start</button>
+      <button id="resetTimer" class="bg-red-600 text-white px-4 py-2 rounded">Reset</button>
+    </div>
+  </main>
+
+  <footer class="text-center text-sm p-2 text-gray-500 dark:text-gray-400">
+    Works Offline • Add to Home Screen • BinaryAILabs 💪
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
