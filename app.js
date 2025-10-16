@@ -470,6 +470,37 @@ document.getElementById("resetAll").onclick = () => {
   }
 };
 
+// ---------------- Mobile Menu Toggle ----------------
+const mobileMenuBtn = document.getElementById("mobileMenuBtn");
+const mobileMenu = document.getElementById("mobileMenu");
+
+if (mobileMenuBtn && mobileMenu) {
+  mobileMenuBtn.addEventListener("click", () => {
+    mobileMenu.classList.toggle("hidden");
+  });
+
+  // Link mobile tabs to same tab-switch logic
+  [
+    ["m-tab-tracker", "trackerTab", "tab-tracker"],
+    ["m-tab-summary", "summaryTab", "tab-summary"],
+    ["m-tab-timeline", "timelineTab", "tab-timeline"],
+    ["m-tab-insights", "insightsTab", "tab-insights"],
+    ["m-tab-timer", "timerTab", "tab-timer"],
+    ["m-tab-leader", "leaderTab", "tab-leader"],
+    ["m-tab-roles", "rolesTab", "tab-roles"],
+    ["m-tab-admin", "adminTab", "tab-admin"],
+  ].forEach(([mBtn, tabId, mainBtn]) => {
+    const btn = document.getElementById(mBtn);
+    if (btn) {
+      btn.addEventListener("click", () => {
+        showTab(tabId, document.getElementById(mainBtn));
+        mobileMenu.classList.add("hidden"); // close menu after selection
+      });
+    }
+  });
+}
+
+
 // ---------------- Init ----------------
 function updateAll() {
   updateSummary();

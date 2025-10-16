@@ -20,6 +20,37 @@
     section.active { display: block; opacity: 1; }
     table { width: 100%; border-collapse: collapse; }
     th, td { border-bottom: 1px solid #ccc; padding: 6px; }
+
+    @media (max-width: 480px) {
+    .tab-btn {
+      flex: 1 1 45%;       /* two tabs per row on small screens */
+      font-size: 0.85rem;  /* slightly smaller text */
+      padding: 0.5rem;     /* tighter padding */
+    }
+    }
+
+    @keyframes slideDown {
+  from { opacity: 0; transform: translateY(-5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-slide-down {
+  animation: slideDown 0.25s ease-in-out;
+}
+.tab-btn {
+  flex: 1;
+  padding: 0.75rem;
+  font-weight: 600;
+  border-bottom: 3px solid transparent;
+  transition: 0.2s;
+}
+.tab-btn:hover { background-color: #fef08a; }
+.active-tab {
+  border-bottom-color: #004165;
+  color: #004165;
+}
+
+
+
   </style>
 </head>
 
@@ -37,16 +68,36 @@
     </div>
   </header>
 
-  <nav class="flex justify-around bg-white border-b sticky top-[64px] z-40">
-    <button id="tab-tracker" class="tab-btn active-tab">Tracker</button>
-    <button id="tab-summary" class="tab-btn">Summary</button>
-    <button id="tab-timeline" class="tab-btn">Timeline</button>
-    <button id="tab-insights" class="tab-btn">Insights</button>
-    <button id="tab-timer" class="tab-btn">Timer</button>
-    <button id="tab-leader" class="tab-btn">Leader</button>
-    <button id="tab-roles" class="tab-btn">Roles</button>
-    <button id="tab-admin" class="tab-btn">Admin</button>
-  </nav>
+<!-- Navigation Bar -->
+<nav class="bg-white border-b sticky top-[64px] z-40">
+  <div class="flex justify-between items-center px-3 py-2">
+    <div id="mobileMenuBtn" class="md:hidden text-2xl font-bold cursor-pointer">☰</div>
+    <div class="hidden md:flex justify-center flex-1 flex-wrap gap-1" id="desktopTabs">
+      <button id="tab-tracker" class="tab-btn active-tab">Tracker</button>
+      <button id="tab-summary" class="tab-btn">Summary</button>
+      <button id="tab-timeline" class="tab-btn">Timeline</button>
+      <button id="tab-insights" class="tab-btn">Insights</button>
+      <button id="tab-timer" class="tab-btn">Timer</button>
+      <button id="tab-leader" class="tab-btn">Leader</button>
+      <button id="tab-roles" class="tab-btn">Roles</button>
+      <button id="tab-admin" class="tab-btn">Admin</button>
+    </div>
+  </div>
+
+  <!-- Mobile menu -->
+  <div id="mobileMenu"
+       class="hidden flex flex-col bg-white border-t shadow-lg md:hidden animate-slide-down">
+    <button id="m-tab-tracker" class="tab-btn text-left">Tracker</button>
+    <button id="m-tab-summary" class="tab-btn text-left">Summary</button>
+    <button id="m-tab-timeline" class="tab-btn text-left">Timeline</button>
+    <button id="m-tab-insights" class="tab-btn text-left">Insights</button>
+    <button id="m-tab-timer" class="tab-btn text-left">Timer</button>
+    <button id="m-tab-leader" class="tab-btn text-left">Leader</button>
+    <button id="m-tab-roles" class="tab-btn text-left">Roles</button>
+    <button id="m-tab-admin" class="tab-btn text-left">Admin</button>
+  </div>
+</nav>
+
 
   <main class="flex-1 p-4 overflow-y-auto">
     <!-- Tracker -->
