@@ -2,157 +2,147 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Toastmasters Role Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Role Tracker</title>
+  <meta name="theme-color" content="#004165" />
   <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#002366" />
-  <script> tailwind.config = { darkMode: 'class' }; </script>
+  <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/3069/3069171.png" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
-    html, body {
-      transition: background-color 0.4s ease, color 0.4s ease;
-      }
-
-    .transition-theme { transition: background-color 0.3s, color 0.3s; }
-    .timeline::before {
-      content: "";
-      position: absolute;
-      left: 1.5rem;
-      top: 0;
-      bottom: 0;
-      width: 3px;
-      background-color: #d1d5db;
-    }
-    .dark .timeline::before { background-color: #374151; }
-
-    /* Active tab highlight */
-    .active-tab { background-color: rgba(37,99,235,0.1); }
-    .dark .active-tab { background-color: rgba(59,130,246,0.25); }
-
-    /* --- High contrast dark mode fix --- */
-    .dark body,
-    .dark main,
-    .dark div,
-    .dark h1, .dark h2, .dark h3,
-    .dark p, .dark span, .dark label,
-    .dark strong, .dark em, .dark small {
-      color: #f9fafb !important;
-    }
-
-    .dark h2, .dark h3 { color: #60a5fa !important; } /* accent for headings */
-    .dark .bg-white { background-color: #1f2937 !important; }
-    .dark .shadow { box-shadow: 0 2px 8px rgba(255,255,255,0.05); }
-    .dark canvas { background-color: #111827 !important; }
+    body { font-family: Georgia, 'Times New Roman', serif; transition: background-color 0.3s, color 0.3s; }
+    header { background-color: #004165; color: white; position: sticky; top: 0; z-index: 50; }
+    .tab-btn { flex: 1; padding: 0.75rem; font-weight: 600; border-bottom: 3px solid transparent; transition: 0.2s; }
+    .tab-btn:hover { background-color: #fef08a; }
+    .active-tab { border-bottom-color: #004165; color: #004165; }
+    section { display: none; opacity: 0; transition: opacity 0.2s ease-in-out; min-height: calc(100vh - 150px); }
+    section.active { display: block; opacity: 1; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border-bottom: 1px solid #ccc; padding: 6px; }
   </style>
 </head>
 
-<body class="bg-gray-100 text-gray-900 transition-theme" id="body">
-  <!-- Header -->
-  <header class="bg-blue-800 text-white p-4 text-xl font-bold flex justify-between items-center">
-    <span>Toastmasters Role Tracker 🎙️</span>
-    <label class="flex items-center cursor-pointer">
-      <span class="mr-2 text-sm">🌙</span>
-      <input type="checkbox" id="themeToggle" class="hidden" />
-      <div class="w-10 h-5 bg-gray-300 rounded-full p-1 flex items-center transition" id="toggleTrack">
-        <div class="w-4 h-4 bg-white rounded-full shadow transform transition" id="toggleThumb"></div>
-      </div>
-    </label>
+<body id="body" class="bg-white text-black min-h-screen flex flex-col">
+  <header class="flex justify-between items-center p-4 shadow">
+    <h1 class="font-bold text-lg">🎙️ Role Tracker</h1>
+    <div class="flex items-center space-x-3">
+      <span>🌞</span>
+      <label class="relative inline-flex items-center cursor-pointer">
+        <input type="checkbox" id="themeToggle" class="sr-only" />
+        <div id="toggleTrack" class="w-10 h-5 bg-gray-300 rounded-full"></div>
+        <div id="toggleThumb" class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform"></div>
+      </label>
+      <span>🌙</span>
+    </div>
   </header>
 
-  <!-- Navigation Tabs -->
-  <div class="flex justify-center flex-wrap bg-white dark:bg-gray-900 shadow border-b border-gray-200 dark:border-gray-700">
-    <button id="tab-tracker" class="py-2 px-3 border-b-4 border-blue-800 font-semibold text-gray-900 dark:text-white active-tab">Tracker</button>
-    <button id="tab-summary" class="py-2 px-3 border-b-4 border-transparent font-semibold text-gray-700 dark:text-gray-300 hover:text-blue-400">Summary</button>
-    <button id="tab-timeline" class="py-2 px-3 border-b-4 border-transparent font-semibold text-gray-700 dark:text-gray-300 hover:text-blue-400">Timeline</button>
-    <button id="tab-insights" class="py-2 px-3 border-b-4 border-transparent font-semibold text-gray-700 dark:text-gray-300 hover:text-blue-400">Insights</button>
-    <button id="tab-timer" class="py-2 px-3 border-b-4 border-transparent font-semibold text-gray-700 dark:text-gray-300 hover:text-blue-400">Timer</button>
-    <button id="tab-leader" class="py-2 px-3 border-b-4 border-transparent font-semibold text-gray-700 dark:text-gray-300 hover:text-blue-400">Leader In Me</button>
+  <nav class="flex justify-around bg-white border-b sticky top-[64px] z-40">
+    <button id="tab-tracker" class="tab-btn active-tab">Tracker</button>
+    <button id="tab-summary" class="tab-btn">Summary</button>
+    <button id="tab-timeline" class="tab-btn">Timeline</button>
+    <button id="tab-insights" class="tab-btn">Insights</button>
+    <button id="tab-timer" class="tab-btn">Timer</button>
+    <button id="tab-leader" class="tab-btn">Leader</button>
+    <button id="tab-roles" class="tab-btn">Roles</button>
+    <button id="tab-admin" class="tab-btn">Admin</button>
+  </nav>
+
+  <main class="flex-1 p-4 overflow-y-auto">
+    <!-- Tracker -->
+    <section id="trackerTab" class="active">
+      <form id="roleForm" class="space-y-3 mb-4">
+        <input type="date" id="date" class="w-full border p-2 rounded" required />
+        <select id="role" class="w-full border p-2 rounded" required></select>
+        <input type="text" id="club" placeholder="Club Name" class="w-full border p-2 rounded" required />
+        <textarea id="notes" placeholder="Notes" class="w-full border p-2 rounded"></textarea>
+        <select id="rating" class="w-full border p-2 rounded">
+          <option value="">Select Rating</option>
+          <option>⭐</option><option>⭐⭐</option><option>⭐⭐⭐</option>
+          <option>⭐⭐⭐⭐</option><option>⭐⭐⭐⭐⭐</option>
+        </select>
+        <button type="submit" class="w-full bg-[#004165] text-white py-2 rounded">Add Role</button>
+      </form>
+      <ul id="roles" class="space-y-3"></ul>
+    </section>
+
+    <!-- Summary -->
+    <section id="summaryTab"><canvas id="roleChart" height="220"></canvas></section>
+
+    <!-- Timeline -->
+    <section id="timelineTab"><div id="timelineContainer" class="space-y-4"></div></section>
+
+    <!-- Insights -->
+    <section id="insightsTab">
+      <p><strong>Total Roles:</strong> <span id="totalRoles">-</span></p>
+      <p><strong>Top Roles:</strong> <span id="topRoles">-</span></p>
+      <p><strong>Average Rating:</strong> <span id="avgRating">-</span></p>
+      <p><strong>Longest Gap:</strong> <span id="longestGap">-</span></p>
+      <p><strong>Active Months:</strong> <span id="streakCount">-</span></p>
+      <label><strong>Yearly Goal:</strong> 
+        <input type="number" id="goalInput" class="border p-1 rounded w-20 ml-2" />
+      </label>
+      <p id="goalProgress" class="text-[#004165] font-semibold"></p>
+      <canvas id="insightPie" height="200"></canvas>
+    </section>
+
+    <!-- Timer -->
+    <section id="timerTab" class="text-center">
+      <div id="timerDisplay" class="text-4xl font-bold mt-4">00:00</div>
+      <div class="space-x-3 mt-3">
+        <button id="startTimer" class="bg-[#004165] text-white px-4 py-2 rounded">Start</button>
+        <button id="resetTimer" class="bg-[#772432] text-white px-4 py-2 rounded">Reset</button>
+      </div>
+    </section>
+
+<!-- Leader In Me -->
+<section id="leaderTab">
+  <h2 class="font-bold text-[#004165] text-center mb-3 text-lg">🏅 Leader In Me Tracker</h2>
+
+  <!-- Dynamic Mini Progress Bar -->
+  <div class="w-full bg-gray-300 h-3 rounded-full mb-3 relative overflow-hidden">
+    <div id="leaderMiniBar" class="h-3 rounded-full transition-all duration-500 ease-in-out"
+         style="width:0%; background:#9ca3af;"></div>
+    <span id="leaderMiniText"
+          class="absolute inset-0 text-xs text-center font-semibold text-black leading-3"></span>
   </div>
 
-  <!-- Tracker Tab -->
-  <main id="trackerTab" class="p-4 max-w-md mx-auto">
-    <form id="roleForm" class="space-y-3 bg-white dark:bg-gray-800 p-4 rounded-2xl shadow">
-      <input type="date" id="date" class="w-full p-2 border rounded dark:bg-gray-700 dark:text-white" required />
-      <input type="text" id="role" placeholder="Role (Speaker, Evaluator...)" class="w-full p-2 border rounded dark:bg-gray-700 dark:text-white" required />
-      <input type="text" id="club" placeholder="Club Name" class="w-full p-2 border rounded dark:bg-gray-700 dark:text-white" required />
-      <textarea id="notes" placeholder="Feedback / Learnings" class="w-full p-2 border rounded dark:bg-gray-700 dark:text-white"></textarea>
-      <label class="block">Rating:
-        <select id="rating" class="w-full p-2 border rounded dark:bg-gray-700 dark:text-white">
-          <option value="">Select rating</option>
-          <option>⭐</option><option>⭐⭐</option><option>⭐⭐⭐</option><option>⭐⭐⭐⭐</option><option>⭐⭐⭐⭐⭐</option>
-        </select>
-      </label>
-      <button type="submit" id="saveBtn" class="bg-blue-700 text-white w-full py-2 rounded">Add Role</button>
-    </form>
+  <p id="leaderProgress" class="font-bold text-[#004165] mb-3 text-center"></p>
+  <div id="leaderContainer" class="space-y-2"></div>
+  <p id="leaderCongrats" class="hidden text-green-600 font-bold mt-3 text-center">
+    🎉 Congratulations! You’ve completed the Leader In Me Journey!
+  </p>
+</section>
 
-    <section id="rolesList" class="mt-6">
-      <h2 class="text-lg font-semibold mb-2">My Roles</h2>
-      <ul id="roles" class="space-y-2"></ul>
+
+
+    <!-- Roles Management -->
+    <section id="rolesTab">
+      <h2 class="font-bold text-[#004165] mb-2">Roles Directory</h2>
+      <input type="text" id="roleSearch" placeholder="Search role..." class="border p-2 rounded w-full mb-3" />
+      <table>
+        <thead><tr><th>Role</th><th>Actions</th></tr></thead>
+        <tbody id="rolesTable"></tbody>
+      </table>
+      <div class="mt-4">
+        <input type="text" id="newRole" placeholder="Add new role..." class="border p-2 rounded w-full mb-2" />
+        <button id="addRoleBtn" class="bg-[#004165] text-white px-4 py-2 rounded w-full">Add Role</button>
+      </div>
+    </section>
+
+    <!-- Admin -->
+    <section id="adminTab">
+      <h2 class="font-bold mb-3 text-center text-[#004165]">Admin Panel</h2>
+      <input type="password" id="adminPass" placeholder="Enter Password" class="border p-2 rounded w-full mb-3" />
+      <button id="unlockAdmin" class="bg-[#004165] text-white px-4 py-2 rounded w-full mb-3">Unlock</button>
+      <div id="adminActions" class="hidden">
+        <button id="resetAll" class="bg-[#772432] text-white px-4 py-2 rounded w-full">Hard Reset</button>
+      </div>
     </section>
   </main>
 
-  <!-- Summary Tab -->
-  <main id="summaryTab" class="p-4 max-w-md mx-auto hidden">
-    <h2 class="text-lg font-semibold mb-4 text-center">Summary 📊</h2>
-    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow mb-6 text-gray-900 dark:text-gray-100">
-      <canvas id="roleChart" height="200"></canvas>
-    </div>
-  </main>
-
-  <!-- Timeline Tab -->
-  <main id="timelineTab" class="p-4 max-w-md mx-auto hidden relative">
-    <h2 class="text-lg font-semibold mb-4 text-center">Timeline of Roles 🗓️</h2>
-    <div id="timelineContainer" class="timeline relative pl-8 space-y-6"></div>
-  </main>
-
-  <!-- Insights Tab -->
-  <main id="insightsTab" class="p-4 max-w-md mx-auto hidden">
-    <h2 class="text-lg font-semibold mb-4 text-center">Insights Dashboard 🧠</h2>
-    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow space-y-3 text-gray-900 dark:text-gray-100">
-      <p><strong>Total Roles:</strong> <span id="totalRoles">0</span></p>
-      <p><strong>Top 3 Roles:</strong> <span id="topRoles">-</span></p>
-      <p><strong>Average Rating:</strong> <span id="avgRating">-</span></p>
-      <p><strong>Longest Gap:</strong> <span id="longestGap">-</span></p>
-      <p><strong>Current Streak:</strong> <span id="streakCount">-</span></p>
-      <div class="mt-3">
-        <label>🎯 Yearly Goal:
-          <input type="number" id="goalInput" min="1" class="p-1 border rounded w-16 dark:bg-gray-700 dark:text-white">
-        </label>
-        <p id="goalProgress" class="mt-1 text-sm"></p>
-      </div>
-      <canvas id="insightPie" height="180"></canvas>
-    </div>
-  </main>
-
-  <!-- Timer Tab -->
-  <main id="timerTab" class="p-4 max-w-md mx-auto hidden">
-    <h2 class="text-lg font-semibold mb-4 text-center">Speech Timer ⏱️</h2>
-    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow text-center space-y-3 text-gray-900 dark:text-gray-100">
-      <label>Duration (min):
-        <input type="number" id="timerInput" value="5" min="2" max="7" class="w-20 text-center border rounded dark:bg-gray-700 dark:text-white" />
-      </label>
-      <div id="timerDisplay" class="text-3xl font-bold">00:00</div>
-      <button id="startTimer" class="bg-green-600 text-white px-4 py-2 rounded">Start</button>
-      <button id="resetTimer" class="bg-red-600 text-white px-4 py-2 rounded">Reset</button>
-    </div>
-  </main>
-
-  <!-- Leader In Me Tab -->
-  <main id="leaderTab" class="p-4 max-w-md mx-auto hidden">
-    <h2 class="text-lg font-semibold mb-3 text-center">🏅 Leader In Me Tracker</h2>
-    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow text-gray-900 dark:text-gray-100">
-      <p id="leaderProgress" class="font-semibold mb-3">Progress: 0 / 10 (0%)</p>
-      <div id="leaderContainer" class="space-y-3"></div>
-      <div id="leaderCongrats" class="hidden mt-4 text-center bg-green-100 text-green-800 p-3 rounded-lg font-bold">
-        🎉 Congratulations! You’ve completed the Leader In Me journey!
-      </div>
-    </div>
-  </main>
-
-  <footer class="text-center text-sm p-2 text-gray-500 dark:text-gray-400">
-    Works Offline • Add to Home Screen • BinaryAILabs 💪
+  <footer class="text-center text-sm p-3 text-gray-600 border-t">
+    BinaryAILabs 💪 | Toastmasters Role Tracker
   </footer>
 
   <script src="app.js"></script>
